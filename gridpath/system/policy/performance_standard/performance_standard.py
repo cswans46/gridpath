@@ -49,13 +49,19 @@ def add_model_components(
     m.PERFORMANCE_STANDARD_ZONE_PERIODS_WITH_PERFORMANCE_STANDARD = Set(
         dimen=2, within=m.PERFORMANCE_STANDARD_ZONES * m.PERIODS
     )
+    
+    m.PERFORMANCE_STANDARD_ZONE_PERIODS_PROJECTS_WITH_PERFORMANCE_STANDARD = Set(
+        dimen=3, within=m.PERFORMANCE_STANDARD_ZONES * m.PERIODS * m.PROJECTS
+    )
+    
     m.performance_standard_tco2_per_mwh = Param(
-        m.PERFORMANCE_STANDARD_ZONE_PERIODS_WITH_PERFORMANCE_STANDARD,
+        m.PERFORMANCE_STANDARD_ZONE_PERIODS_PROJECTS_WITH_PERFORMANCE_STANDARD,
         within=NonNegativeReals,
         default=Infinity,
     )
+    
     m.performance_standard_tco2_per_mw = Param(
-        m.PERFORMANCE_STANDARD_ZONE_PERIODS_WITH_PERFORMANCE_STANDARD,
+        m.PERFORMANCE_STANDARD_ZONE_PERIODS_PROJECTS_WITH_PERFORMANCE_STANDARD,
         within=NonNegativeReals,
         default=Infinity,
     )
@@ -93,7 +99,7 @@ def load_model_data(
             "inputs",
             "performance_standard.tab",
         ),
-        index=m.PERFORMANCE_STANDARD_ZONE_PERIODS_WITH_PERFORMANCE_STANDARD,
+        index=m.PERFORMANCE_STANDARD_ZONE_PERIODS_PROJECTS_WITH_PERFORMANCE_STANDARD,
         param=(m.performance_standard_tco2_per_mwh, m.performance_standard_tco2_per_mw),
     )
 
@@ -118,7 +124,7 @@ def get_inputs_from_database(
 
     c = conn.cursor()
     performance_standard = c.execute(
-        """SELECT performance_standard_zone, period, performance_standard_tco2_per_mwh, performance_standard_tco2_per_mw
+        """SELECT performance_standard_zone, period, project, performance_standard_tco2_per_mwh, performance_standard_tco2_per_mw
         FROM inputs_system_performance_standard
         JOIN
         (SELECT period
@@ -130,20 +136,45 @@ def get_inputs_from_database(
         FROM inputs_geography_performance_standard_zones
         WHERE performance_standard_zone_scenario_id = {}) as relevant_zones
         using (performance_standard_zone)
-        WHERE performance_standard_scenario_id = {}
+        JOIN
+        -- Get projects from portfolio only
+        (SELECT project
+            FROM inputs_project_portfolios
+            WHERE project_portfolio_scenario_id = {}
+        ) as prj_tbl
+        LEFT OUTER JOIN 
+        -- Get performance standard zones for those projects
+        (SELECT project, performance_standard_zone
+            FROM inputs_project_performance_standard_zones
+            WHERE project_performance_standard_zone_scenario_id = {}
+        ) as prj_ps_zone_tbl
+        USING (project)
+        -- Filter out projects whose performance standard zone is not one included in 
+        -- our performance_standard_zone_scenario_id
+        WHERE performance_standard_zone in (
+                SELECT performance_standard_zone
+                    FROM inputs_geography_performance_standard_zones
+                    WHERE performance_standard_zone_scenario_id = {}
+        )
         AND subproblem_id = {}
-        AND stage_id = {};
+        AND stage_id = {}
+        AND project_portfolio_scenario_id = {};
         """.format(
             subscenarios.TEMPORAL_SCENARIO_ID,
             subscenarios.PERFORMANCE_STANDARD_ZONE_SCENARIO_ID,
             subscenarios.PERFORMANCE_STANDARD_SCENARIO_ID,
+            subscenarios.PROJECT_PORTFOLIO_SCENARIO_ID,
+            subscenarios.PROJECT_PERFORMANCE_STANDARD_ZONE_SCENARIO_ID,
+            subscenarios.PERFORMANCE_STANDARD_ZONE_SCENARIO_ID,
+            subscenarios.PROJECT_PORTFOLIO_SCENARIO_ID,
+            subscenarios.PROJECT_PERFORMANCE_STANDARD_ZONE_SCENARIO_ID,
+            subscenarios.PERFORMANCE_STANDARD_ZONE_SCENARIO_ID,
             subproblem,
             stage,
         )
     )
 
     return performance_standard
-
 
 def validate_inputs(
     scenario_id,
@@ -268,13 +299,14 @@ def export_results(
         [
             z,
             p,
-            float(m.performance_standard_tco2_per_mwh[z, p]),
-            float(m.performance_standard_tco2_per_mw[z, p]),
+            prj,
+            float(m.performance_standard_tco2_per_mwh[z, p, prj]),
+            float(m.performance_standard_tco2_per_mw[z, p, prj]),
         ]
-        for (z, p) in m.PERFORMANCE_STANDARD_ZONE_PERIODS_WITH_PERFORMANCE_STANDARD
+        for (z, p, prj) in m.PERFORMANCE_STANDARD_ZONE_PERIODS_WITH_PERFORMANCE_STANDARD_PRJS
     ]
     results_df = create_results_df(
-        index_columns=["performance_standard_zone", "period"],
+        index_columns=["performance_standard_zone", "period", "performance_standard_project"],
         results_columns=results_columns,
         data=data,
     )

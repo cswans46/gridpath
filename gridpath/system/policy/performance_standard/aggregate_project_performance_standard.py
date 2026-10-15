@@ -17,7 +17,8 @@ Aggregate carbon emissions and energy from the project-timepoint level to
 the performance zone - period level.
 """
 
-from pyomo.environ import Expression, value
+
+from pyomo.environ import Expression, value, Constraint, Infinity
 
 from gridpath.auxiliary.dynamic_components import (
     performance_standard_balance_emission_components,
@@ -52,14 +53,21 @@ def add_model_components(
         :param p:
         :return:
         """
-        return sum(
-            mod.Project_Carbon_Emissions[g, tmp]
-            * mod.hrs_in_tmp[tmp]
-            * mod.tmp_weight[tmp]
-            for (g, tmp) in mod.PERFORMANCE_STANDARD_OPR_TMPS
-            if g in mod.PERFORMANCE_STANDARD_PRJS_BY_PERFORMANCE_STANDARD_ZONE[z]
-            and tmp in mod.TMPS_IN_PRD[p]
-        )
+        if all(
+            mod.performance_standard_tco2_per_mwh[z, prj, p] == Infinity
+            for prj in mod.PERFORMANCE_STANDARD_PRJS_BY_PERFORMANCE_STANDARD_ZONE[z]
+        ):
+            return Constraint.Skip
+        
+        else:
+            return sum(
+                mod.Project_Carbon_Emissions[g, tmp]
+                * mod.hrs_in_tmp[tmp]
+                * mod.tmp_weight[tmp]
+                for (g, tmp) in mod.PERFORMANCE_STANDARD_OPR_TMPS
+                if g in mod.PERFORMANCE_STANDARD_PRJS_BY_PERFORMANCE_STANDARD_ZONE[z]
+                and tmp in mod.TMPS_IN_PRD[p]
+            )
 
     m.Total_Performance_Standard_Project_Emissions = Expression(
         m.PERFORMANCE_STANDARD_ZONE_PERIODS_WITH_PERFORMANCE_STANDARD,
@@ -76,12 +84,14 @@ def add_model_components(
         :return:
         """
         return sum(
-            mod.Bulk_Power_Provision_MW[g, tmp]
-            * mod.hrs_in_tmp[tmp]
-            * mod.tmp_weight[tmp]
-            for (g, tmp) in mod.PERFORMANCE_STANDARD_OPR_TMPS
-            if g in mod.PERFORMANCE_STANDARD_PRJS_BY_PERFORMANCE_STANDARD_ZONE[z]
-            and tmp in mod.TMPS_IN_PRD[p]
+            sum(
+                mod.Bulk_Power_Provision_MW[g, tmp]
+                * mod.hrs_in_tmp[tmp]
+                * mod.tmp_weight[tmp]
+                for tmp in mod.PERFORMANCE_STANDARD_OPR_TMPS
+                if tmp in mod.TMPS_IN_PRD[p]
+            ) * mod.performance_standard_tco2_per_mw[z, g, p]
+            for g in mod.PERFORMANCE_STANDARD_PRJS_BY_PERFORMANCE_STANDARD_ZONE[z]
         )
 
     # We'll multiply this by the standard in the balance constraint
@@ -100,12 +110,18 @@ def add_model_components(
         :param p:
         :return:
         """
-        return sum(
-            mod.Capacity_MW[prj, prd]
-            for (prj, prd) in mod.PERFORMANCE_STANDARD_OPR_PRDS
-            if prj in mod.PERFORMANCE_STANDARD_PRJS_BY_PERFORMANCE_STANDARD_ZONE[z]
-            and prd == p
-        )
+        if all(
+            mod.performance_standard_tco2_per_mw[z, prj, p] == Infinity
+            for prj in mod.PERFORMANCE_STANDARD_PRJS_BY_PERFORMANCE_STANDARD_ZONE[z]
+        ):
+            return Constraint.Skip
+        else:
+            return sum(
+                mod.Capacity_MW[prj, prd] * mod.performance_standard_tco2_per_mw[z, prj, prd]
+                for (prj, prd) in mod.PERFORMANCE_STANDARD_OPR_PRDS
+                if prj in mod.PERFORMANCE_STANDARD_PRJS_BY_PERFORMANCE_STANDARD_ZONE[z]
+                and prd == p
+            )
 
     # We'll multiply this by the standard in the balance constraint
     # Note this is NOT added to the dynamic components
