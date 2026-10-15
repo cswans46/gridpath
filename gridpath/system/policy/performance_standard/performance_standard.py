@@ -154,12 +154,6 @@ def get_inputs_from_database(
             subscenarios.TEMPORAL_SCENARIO_ID,
             subscenarios.PERFORMANCE_STANDARD_ZONE_SCENARIO_ID,
             subscenarios.PERFORMANCE_STANDARD_SCENARIO_ID,
-            subscenarios.PROJECT_PORTFOLIO_SCENARIO_ID,
-            subscenarios.PROJECT_PERFORMANCE_STANDARD_ZONE_SCENARIO_ID,
-            subscenarios.PERFORMANCE_STANDARD_ZONE_SCENARIO_ID,
-            subscenarios.PROJECT_PORTFOLIO_SCENARIO_ID,
-            subscenarios.PROJECT_PERFORMANCE_STANDARD_ZONE_SCENARIO_ID,
-            subscenarios.PERFORMANCE_STANDARD_ZONE_SCENARIO_ID,
             subproblem,
             stage,
         )
@@ -255,6 +249,7 @@ def write_model_inputs(
                 "performance_standard_zone",
                 "project",
                 "period",
+                "project",
                 "performance_standard_tco2_per_mwh",
                 "performance_standard_tco2_per_mw",
             ]

@@ -5733,6 +5733,7 @@ CREATE TABLE inputs_system_performance_standard
     performance_standard_zone         VARCHAR(32),
     project                           VARCHAR(64),
     period                            INTEGER,
+    project                           VARCHAR(64),
     subproblem_id                     INTEGER,
     stage_id                          INTEGER,
     performance_standard_tco2_per_mwh FLOAT,
