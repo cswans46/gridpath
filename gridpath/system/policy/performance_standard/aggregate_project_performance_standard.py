@@ -88,9 +88,9 @@ def add_model_components(
                 mod.Bulk_Power_Provision_MW[g, tmp]
                 * mod.hrs_in_tmp[tmp]
                 * mod.tmp_weight[tmp]
-                for tmp in mod.PERFORMANCE_STANDARD_OPR_TMPS
-                if tmp in mod.TMPS_IN_PRD[p]
-            ) * mod.performance_standard_tco2_per_mw[z, g, p]
+                for prj, tmp in mod.PERFORMANCE_STANDARD_OPR_TMPS
+                if prj == g and tmp in mod.TMPS_IN_PRD[p]
+            ) * mod.performance_standard_tco2_per_mwh[z, g, p]
             for g in mod.PERFORMANCE_STANDARD_PRJS_BY_PERFORMANCE_STANDARD_ZONE[z]
         )
 
@@ -166,8 +166,8 @@ def export_results(
     """
     results_columns = [
         "performance_standard_project_emissions_tco2",
-        "performance_standard_project_energy_mwh",
-        "performance_standard_project_capacity_mw",
+        "performance_standard_project_energy_tco2",
+        "performance_standard_project_capacity_tco2",
     ]
     data = [
         [
