@@ -89,28 +89,18 @@ def add_model_components(
         :param p:
         :return:
         """
-        
-        if all(
-            mod.performance_standard_tco2_per_mwh[z, prj, p] == Infinity
-            for prj in mod.PERFORMANCE_STANDARD_PRJS_BY_PERFORMANCE_STANDARD_ZONE[z]
-        ):
-        
-            return Constraint.Skip
-        
-        else:
-        
-            return (
-                mod.Total_Performance_Standard_Emissions_from_All_Sources_Expression[
-                    z, p
-                ]
-                - mod.Performance_Standard_Energy_Unit_Overage_Expression[z, p]
-                <= (
-                    mod.Total_Performance_Standard_Project_Energy[z, p]
-                )
-                + mod.Total_Performance_Standard_Credits_from_All_Sources_Expression[
-                    z, p
-                ]
+        return (
+            mod.Total_Performance_Standard_Emissions_from_All_Sources_Expression[
+                z, p
+            ]
+            - mod.Performance_Standard_Energy_Unit_Overage_Expression[z, p]
+            <= (
+                mod.Total_Performance_Standard_Project_Energy[z, p]
             )
+            + mod.Total_Performance_Standard_Credits_from_All_Sources_Expression[
+                z, p
+            ]
+        )
 
     m.Performance_Standard_Energy_Unit_Constraint = Constraint(
         m.PERFORMANCE_STANDARD_ZONE_PERIODS_WITH_PERFORMANCE_STANDARD,
@@ -142,25 +132,18 @@ def add_model_components(
         :param p:
         :return:
         """
-        
-        if all(
-            mod.performance_standard_tco2_per_mw[z, prj, p] == Infinity
-            for prj in mod.PERFORMANCE_STANDARD_PRJS_BY_PERFORMANCE_STANDARD_ZONE[z]
-        ):
-            return Constraint.Skip   
-        else:
-            return (
-                mod.Total_Performance_Standard_Emissions_from_All_Sources_Expression[
-                    z, p
-                ]
-                - mod.Performance_Standard_Power_Unit_Overage_Expression[z, p]
-                <= (
-                    mod.Total_Performance_Standard_Project_Capacity[z, p]
-                )
-                + mod.Total_Performance_Standard_Credits_from_All_Sources_Expression[
-                    z, p
-                ]
+        return (
+            mod.Total_Performance_Standard_Emissions_from_All_Sources_Expression[
+                z, p
+            ]
+            - mod.Performance_Standard_Power_Unit_Overage_Expression[z, p]
+            <= (
+                mod.Total_Performance_Standard_Project_Capacity[z, p]
             )
+            + mod.Total_Performance_Standard_Credits_from_All_Sources_Expression[
+                z, p
+            ]
+        )
 
     m.Performance_Standard_Power_Unit_Constraint = Constraint(
         m.PERFORMANCE_STANDARD_ZONE_PERIODS_WITH_PERFORMANCE_STANDARD,
