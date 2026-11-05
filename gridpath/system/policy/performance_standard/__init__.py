@@ -59,7 +59,7 @@ def export_results(
     # Add the dataframe to the dynamic components to pass to other modules
     setattr(d, PERFORMANCE_STANDARD_Z_PRD_DF, df)
     
-    # Zone-period-project DF
+    # Zone-project-period DF
     df = pd.DataFrame(
         columns=[
             "performance_standard_zone",

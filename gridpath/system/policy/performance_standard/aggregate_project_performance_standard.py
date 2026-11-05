@@ -18,13 +18,15 @@ the performance zone - period level.
 """
 
 
-from pyomo.environ import Expression, value, Constraint, Infinity
+from pyomo.environ import Expression, value, Constraint
 
 from gridpath.auxiliary.dynamic_components import (
     performance_standard_balance_emission_components,
 )
 from gridpath.common_functions import create_results_df, update_results_df
 from gridpath.system.policy.performance_standard import PERFORMANCE_STANDARD_Z_PRD_DF
+
+Infinity = float("inf")
 
 
 def add_model_components(

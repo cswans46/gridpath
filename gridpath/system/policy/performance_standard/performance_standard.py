@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Performance standard for each performance_standard zone
+Performance standards indexed by performance standard zone, project, and period.
 """
 
 import csv
@@ -148,18 +148,17 @@ def get_inputs_from_database(
         WHERE ps.performance_standard_scenario_id = ?
           AND ps.subproblem_id = ?
           AND ps.stage_id = ?
-        ORDER BY ps.performance_standard_zone, ps.period, ps.project;
+        ORDER BY ps.performance_standard_zone, ps.project, ps.period;
         """,
         (
             subscenarios.TEMPORAL_SCENARIO_ID,
             subscenarios.PERFORMANCE_STANDARD_ZONE_SCENARIO_ID,
+            subscenarios.PROJECT_PORTFOLIO_SCENARIO_ID,
             subscenarios.PERFORMANCE_STANDARD_SCENARIO_ID,
             subproblem,
             stage,
         )
     )
-
-    return performance_standard
 
 def validate_inputs(
     scenario_id,
@@ -249,7 +248,6 @@ def write_model_inputs(
                 "performance_standard_zone",
                 "project",
                 "period",
-                "project",
                 "performance_standard_tco2_per_mwh",
                 "performance_standard_tco2_per_mw",
             ]
